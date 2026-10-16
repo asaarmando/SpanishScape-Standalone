@@ -1,0 +1,39 @@
+name: Build SpanishScape for macOS
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Unpack app source
+        run: |
+          base64 -D -i spanishscape-source.zip.b64 -o source.zip
+          unzip -q source.zip
+
+      - name: Build and package the app
+        run: bash SpanishScape/Scripts/build-app.sh
+
+      - name: Upload app for download
+        uses: actions/upload-artifact@v4
+        with:
+          name: SpanishScape-macOS
+          path: SpanishScape/dist/SpanishScape-macOS.zip
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Publish versioned release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" SpanishScape/dist/SpanishScape-macOS.zip --title "SpanishScape $GITHUB_REF_NAME" --generate-notes

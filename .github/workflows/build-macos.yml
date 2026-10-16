@@ -3,6 +3,8 @@ name: Build SpanishScape for macOS
 on:
   workflow_dispatch:
   push:
+    branches:
+      - main
     tags:
       - "v*"
 
